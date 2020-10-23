@@ -4,7 +4,7 @@
      *
      * Проверка баланса для Zabbix 5.0.2
      *
-     * Последняя проверка работоспособности скрипта была проведена 19.10.2020
+     * Последняя проверка работоспособности скрипта была проведена 23.10.2020
      *
      * 1) Помещаем этот файл в /usr/lib/zabbix/externalscripts
      * 1.1) chmod 0744 /usr/lib/zabbix/externalscripts/balances.php
@@ -52,6 +52,7 @@
         public $provider;
         public $login;
         public $username;
+        public $yandexMarketBID; // ID бизнес-аккаунта для Яндекс.Маркет
 
         function __construct()
         {
@@ -734,7 +735,10 @@
         {
             $page_cont = $this->yandexAuth();
             $url = "https://partner.market.yandex.ru/?list=yes";
+            if(isset($this->yandexMarketBID) and !empty($this->yandexMarketBID))                
+                $url = "https://partner.market.yandex.ru/?businessId=".$this->yandexMarketBID."&list=yes";   
             $page_cont = $this->browser_get_contents($url);
+            //print_r($page_cont);die();
             preg_match_all('/"daysLeftToSpend":"(.*?)","actualBalance":"(.*?)"/', $page_cont, $match);
             return $match[2][0].'('.$match[1][0].')';
         }
@@ -753,12 +757,15 @@
         $balances->provider = $argv[1];
         $balances->login    = $argv[2];
         $balances->password = (isset($argv[3]) and !empty($argv[3])) ? $argv[3] : "";
+        $balances->yandexMarketBID = (isset($argv[4]) and !empty($argv[4])) ? $argv[4] : "";
+        
     }
     else
     {
         $balances->provider = $_GET['mode'];
         $balances->login    = $_GET['login'];
         $balances->password = (isset($_GET['password']) and !empty($_GET['password'])) ? $_GET['password'] : "";
+        $balances->yandexMarketBID = (isset($_GET['yandexMarketBID']) and !empty($_GET['yandexMarketBID'])) ? $_GET['yandexMarketBID'] : "";
     }
 
     $func = 'get'.ucfirst($balances->provider).'Balance';
